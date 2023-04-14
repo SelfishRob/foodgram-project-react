@@ -30,6 +30,7 @@ jobs:
     - name: Test with flake8 and django tests
       run: |
         # запуск проверки проекта по flake8
+        cd backend
         python -m flake8
-      # env:
-      #   SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
