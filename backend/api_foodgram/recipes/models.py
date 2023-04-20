@@ -6,13 +6,13 @@ from django.db.models import Exists, OuterRef
 from api_foodgram.settings import AUTH_USER_MODEL
 
 
-CustomUser = AUTH_USER_MODEL
+User = AUTH_USER_MODEL
 
 
 class Tag(models.Model):
     name = models.CharField(max_length=200)
-    color = models.CharField(max_length=7, null=True)
-    slug = models.SlugField(max_length=200, unique=True, null=True)
+    color = models.CharField(max_length=7)
+    slug = models.SlugField(max_length=200, unique=True)
 
     class Meta:
         verbose_name = 'Тег'
@@ -71,7 +71,7 @@ class RecipeManager(models.Manager):
 
 class Recipe(models.Model):
     author = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор'
@@ -86,9 +86,8 @@ class Recipe(models.Model):
         related_name='ingredients',
         verbose_name='Ингредиенты'
     )
-    tags = models.ForeignKey(
+    tags = models.ManyToManyField(
         Tag,
-        on_delete=models.CASCADE,
         related_name='tags',
         verbose_name='Тег'
     )
@@ -117,12 +116,12 @@ class RecipeIngredient(models.Model):
     amount = models.PositiveIntegerField(
         verbose_name='Количество'
     )
-    ingredients = models.ForeignKey(
+    ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
         verbose_name='Ингредиент'
     )
-    recipes = models.ForeignKey(
+    recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         verbose_name='Рецепт'
@@ -138,12 +137,12 @@ class RecipeIngredient(models.Model):
 
 class Follow(models.Model):
     user = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name='follower',
     )
     following = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name='following',
     )
@@ -163,7 +162,7 @@ class Follow(models.Model):
 
 class Favorite(models.Model):
     user = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name='favorites',
         verbose_name='Пользователь'
@@ -191,7 +190,7 @@ class Favorite(models.Model):
 
 class ShoppingCart(models.Model):
     user = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name='user',
         verbose_name='Пользователь'
