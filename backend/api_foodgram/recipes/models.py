@@ -39,34 +39,30 @@ class Ingredient(models.Model):
 
 class RecipeQuerySet(models.QuerySet):
 
-    def favorite_recipe(self, user_id: Optional[int]):
+    def add_user_annotations(self, user_id: Optional[int]):
         return self.annotate(
-            is_favorite=Exists(
+            is_favorited=Exists(
                 Favorite.objects.filter(
                     user_id=user_id, recipe__pk=OuterRef('pk')
                 )
             ),
-        )
-
-    def shopping_cart(self, user_id: Optional[int]):
-        return self.annotate(
-            is_shopping_cart=Exists(
-                ShoppingCart.objects.filter(
-                    user_id=user_id, recipe__pk=OuterRef('pk')
-                )
-            ),
+            # is_in_shopping_cart=Exists(
+            #     ShoppingCart.objects.filter(
+            #         user_id=user_id, recipe__pk=OuterRef('pk')
+            #     )
+            # ),
         )
 
 
-class RecipeManager(models.Manager):
-    def get_queryset(self):
-        return RecipeQuerySet(self.model)
+# class RecipeManager(models.Manager):
+#     def get_queryset(self):
+#         return RecipeQuerySet(self.model)
 
-    def favorite_recipe(self):
-        return self.get_queryset().favorite_recipe()
+#     def favorite_recipe(self):
+#         return self.get_queryset().favorite_recipe()
 
-    def shopping_cart(self):
-        return self.get_queryset().shopping_cart()
+#     def shopping_cart(self):
+#         return self.get_queryset().shopping_cart()
 
 
 class Recipe(models.Model):
@@ -100,8 +96,7 @@ class Recipe(models.Model):
         db_index=True
     )
 
-    objects = models.Manager()
-    recipe_obj = RecipeManager()
+    objects = RecipeQuerySet.as_manager()
 
     class Meta:
         ordering = ('-pub_date', )
@@ -132,7 +127,7 @@ class RecipeIngredient(models.Model):
         verbose_name_plural = 'Ингредиенты в рецептах'
 
     def __str__(self) -> str:
-        return f'{self.ingredients} в {self.recipes}'
+        return f'{self.ingredient} в {self.recipe}'
 
 
 class Follow(models.Model):
