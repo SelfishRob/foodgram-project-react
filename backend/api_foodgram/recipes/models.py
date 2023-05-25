@@ -46,11 +46,11 @@ class RecipeQuerySet(models.QuerySet):
                     user_id=user_id, recipe__pk=OuterRef('pk')
                 )
             ),
-            # is_in_shopping_cart=Exists(
-            #     ShoppingCart.objects.filter(
-            #         user_id=user_id, recipe__pk=OuterRef('pk')
-            #     )
-            # ),
+            is_in_shopping_cart=Exists(
+                ShoppingCart.objects.filter(
+                    user_id=user_id, recipe__pk=OuterRef('pk')
+                )
+            ),
         )
 
 
@@ -136,23 +136,23 @@ class Follow(models.Model):
         on_delete=models.CASCADE,
         related_name='follower',
     )
-    following = models.ForeignKey(
+    author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='following',
+        related_name='author',
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=('user', 'following'),
+                fields=('user', 'author'),
                 name='unique_following')
         ]
         verbose_name = 'Подписаться на автора'
         verbose_name_plural = 'Подписаться на авторов'
 
     def __str__(self) -> str:
-        return f'{self.user} подписался на {self.following}'
+        return f'{self.user} подписался на {self.author}'
 
 
 class Favorite(models.Model):

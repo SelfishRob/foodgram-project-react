@@ -4,13 +4,15 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer, UserSerializer
 
-from recipes.models import (Ingredient, Recipe,
+from recipes.models import (Follow, Ingredient, Recipe,
                             RecipeIngredient, Tag)
 from users.models import CustomUser
 
 
 class CustomUserSerializer(UserSerializer):
-    # is_subscribed = Serialiser.MethodField()
+    """Сериализатор для кастомного юзера."""
+    is_subscribed = serializers.SerializerMethodField()
+
     class Meta(UserSerializer.Meta):
         model = CustomUser
         fields = (
@@ -19,11 +21,18 @@ class CustomUserSerializer(UserSerializer):
             'email',
             'first_name',
             'last_name',
-            # 'is_subscribed'
+            'is_subscribed'
         )
+
+    def get_is_subscribed(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            return Follow.objects.filter(user=user, author=obj.id).exists()
+        return False
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
+    """Сериализатор для создания юзера."""
     class Meta(UserCreateSerializer.Meta):
         model = CustomUser
         fields = (
@@ -37,18 +46,21 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """Сериализатор для тегов."""
     class Meta:
         fields = ('id', 'name', 'color', 'slug')
         model = Tag
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор для ингредиентов."""
     class Meta:
         fields = ('id', 'name', 'measurement_unit')
         model = Ingredient
 
 
 class Base64ImageField(serializers.ImageField):
+    """Отдельный сериализатор для картинок."""
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
@@ -59,6 +71,7 @@ class Base64ImageField(serializers.ImageField):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор, который связывает модели рецепт и ингредиенты."""
     name = serializers.StringRelatedField(
         source='ingredient.name'
     )
@@ -76,6 +89,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для рецептов."""
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all()
@@ -181,3 +195,79 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    """Сериализатор для подписки на автора."""
+    email = serializers.ReadOnlyField(source='author.email')
+    id = serializers.ReadOnlyField(source='author.id')
+    username = serializers.ReadOnlyField(source='author.username')
+    first_name = serializers.ReadOnlyField(source='author.first_name')
+    last_name = serializers.ReadOnlyField(source='author.last_name')
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Follow
+        fields = (
+            'id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count'
+        )
+
+    def get_is_subscribed(self, obj):
+        return Follow.objects.filter(
+            user=obj.user, author=obj.author).exists()
+
+    def get_recipes(self, obj):
+        recipes = Recipe.objects.filter(author=obj.author)
+        return RecipeSerializer(recipes, many=True, context=self.context).data
+
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj.author).count()
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для избранных рецептов."""
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time'
+        )
+        read_only_fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time'
+        )
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    """Сериализатор для корзины рецептов."""
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time'
+        )
+        read_only_fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time'
+        )
