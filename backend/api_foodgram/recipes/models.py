@@ -38,7 +38,6 @@ class Ingredient(models.Model):
 
 
 class RecipeQuerySet(models.QuerySet):
-
     def add_user_annotations(self, user_id: Optional[int]):
         return self.annotate(
             is_favorited=Exists(
@@ -52,17 +51,6 @@ class RecipeQuerySet(models.QuerySet):
                 )
             ),
         )
-
-
-# class RecipeManager(models.Manager):
-#     def get_queryset(self):
-#         return RecipeQuerySet(self.model)
-
-#     def favorite_recipe(self):
-#         return self.get_queryset().favorite_recipe()
-
-#     def shopping_cart(self):
-#         return self.get_queryset().shopping_cart()
 
 
 class Recipe(models.Model):
