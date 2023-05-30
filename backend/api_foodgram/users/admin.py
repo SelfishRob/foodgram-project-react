@@ -1,44 +1,45 @@
 from django.contrib import admin
-from users.models import CustomUser
+from django.contrib.admin import ModelAdmin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+
 from recipes.models import (Favorite, Follow, Ingredient, Recipe,
                             RecipeIngredient, ShoppingCart, Tag)
+from users.models import CustomUser
 
 
-@admin.register(CustomUser)
-class UserAdmin(admin.ModelAdmin):
-    pass
+class CustomUserAdmin(BaseUserAdmin):
+    list_display = ('email', 'username', 'first_name', 'last_name')
+    search_fields = ('email', 'username', 'first_name', 'last_name')
 
 
-@admin.register(Favorite)
-class FavoriteAdmin(admin.ModelAdmin):
-    pass
+admin.site.register(CustomUser, CustomUserAdmin)
 
 
-@admin.register(Follow)
-class FollowAdmin(admin.ModelAdmin):
-    pass
+class RecipeAdmin(ModelAdmin):
+    list_display = ['id', 'name', 'author', 'favorites_count']
+    search_fields = ['name', 'author__username']
+    list_filter = ['tags']
+
+    def favorites_count(self, obj):
+        if Favorite.objects.filter(recipe=obj).exists():
+            return Favorite.objects.filter(recipe=obj).count()
+        return 0
 
 
-@admin.register(Ingredient)
-class IngredientAdmin(admin.ModelAdmin):
-    pass
+admin.site.register(Recipe, RecipeAdmin)
 
 
-@admin.register(Recipe)
-class RecipeAdmin(admin.ModelAdmin):
-    pass
+class IngredientAdmin(ModelAdmin):
+    list_display = ('name', 'measurement_unit')
+    list_filter = ('name',)
 
 
-@admin.register(RecipeIngredient)
-class RecipeIngredientAdmin(admin.ModelAdmin):
-    pass
+admin.site.register(Ingredient, IngredientAdmin)
 
 
-@admin.register(ShoppingCart)
-class ShoppingCartAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(Tag)
-class TagAdmin(admin.ModelAdmin):
-    pass
+# Регистрация остальных моделей
+admin.site.register(Favorite)
+admin.site.register(Follow)
+admin.site.register(RecipeIngredient)
+admin.site.register(ShoppingCart)
+admin.site.register(Tag)

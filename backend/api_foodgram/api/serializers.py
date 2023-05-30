@@ -1,11 +1,11 @@
 import base64
+
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from rest_framework import serializers
 
-from recipes.models import (Follow, Ingredient, Recipe,
-                            RecipeIngredient, Tag)
+from recipes.models import Follow, Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import CustomUser
 
 
@@ -227,34 +227,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         recipes = Recipe.objects.filter(author=obj.author)
-        return RecipeSerializer(recipes, many=True, context=self.context).data
+        return RecipeMinifiedSerializer(
+            recipes, many=True, context=self.context).data
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj.author).count()
 
 
-class FavoriteSerializer(serializers.ModelSerializer):
-    """Сериализатор для избранных рецептов."""
-    image = Base64ImageField()
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'name',
-            'image',
-            'cooking_time'
-        )
-        read_only_fields = (
-            'id',
-            'name',
-            'image',
-            'cooking_time'
-        )
-
-
-class ShoppingCartSerializer(serializers.ModelSerializer):
-    """Сериализатор для корзины рецептов."""
+class RecipeMinifiedSerializer(serializers.ModelSerializer):
+    """Сериализатор для избранных рецептов и списка покупок."""
     image = Base64ImageField()
 
     class Meta:
