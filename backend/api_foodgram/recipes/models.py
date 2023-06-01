@@ -1,20 +1,22 @@
 from typing import Optional
 
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Exists, OuterRef
 
-from api_foodgram.settings import AUTH_USER_MODEL
+from users.models import CustomUser
 
 
-User = AUTH_USER_MODEL
+User = CustomUser
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=200)
-    color = models.CharField(max_length=7)
-    slug = models.SlugField(max_length=200, unique=True)
+    name = models.CharField(max_length=200, verbose_name='Имя тега')
+    color = models.CharField(max_length=7, verbose_name='Цвет')
+    slug = models.SlugField(max_length=200, unique=True, verbose_name='Слаг')
 
     class Meta:
+        ordering = ('name',)
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
@@ -23,13 +25,15 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200,
+                            verbose_name='Название ингредиента')
     measurement_unit = models.CharField(
         max_length=200,
         verbose_name='единицы измерения'
     )
 
     class Meta:
+        ordering = ('name',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
 
@@ -60,9 +64,9 @@ class Recipe(models.Model):
         related_name='recipes',
         verbose_name='Автор'
     )
-    name = models.CharField(max_length=200)
-    text = models.TextField()
-    image = models.ImageField()
+    name = models.CharField(max_length=200, verbose_name='Название рецепта')
+    text = models.TextField(verbose_name='Текст')
+    image = models.ImageField(verbose_name='Изображение')
     ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient',
@@ -87,7 +91,7 @@ class Recipe(models.Model):
     objects = RecipeQuerySet.as_manager()
 
     class Meta:
-        ordering = ('-pub_date', )
+        ordering = ('-pub_date',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
@@ -97,7 +101,8 @@ class Recipe(models.Model):
 
 class RecipeIngredient(models.Model):
     amount = models.PositiveIntegerField(
-        verbose_name='Количество'
+        verbose_name='Количество',
+        validators=(MinValueValidator(1),)
     )
     ingredient = models.ForeignKey(
         Ingredient,
@@ -111,6 +116,7 @@ class RecipeIngredient(models.Model):
     )
 
     class Meta:
+        ordering = ('-id',)
         verbose_name = 'Ингредиент в рецепте'
         verbose_name_plural = 'Ингредиенты в рецептах'
 
@@ -123,14 +129,17 @@ class Follow(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='follower',
+        verbose_name='Пользователь'
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='author',
+        verbose_name='Автор'
     )
 
     class Meta:
+        ordering = ('-id',)
         constraints = [
             models.UniqueConstraint(
                 fields=('user', 'author'),
@@ -158,6 +167,7 @@ class Favorite(models.Model):
     )
 
     class Meta:
+        ordering = ('-id',)
         constraints = [
             models.UniqueConstraint(
                 fields=('user', 'recipe'),
@@ -186,6 +196,7 @@ class ShoppingCart(models.Model):
     )
 
     class Meta:
+        ordering = ('-id',)
         constraints = [
             models.UniqueConstraint(
                 fields=('user', 'recipe'),

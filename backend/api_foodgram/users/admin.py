@@ -7,6 +7,12 @@ from recipes.models import (Favorite, Follow, Ingredient, Recipe,
 from users.models import CustomUser
 
 
+class RecipeIngredientInline(admin.TabularInline):
+    model = RecipeIngredient
+    extra = 1
+    min_num = 1
+
+
 class CustomUserAdmin(BaseUserAdmin):
     list_display = ('email', 'username', 'first_name', 'last_name')
     search_fields = ('email', 'username', 'first_name', 'last_name')
@@ -19,10 +25,11 @@ class RecipeAdmin(ModelAdmin):
     list_display = ['id', 'name', 'author', 'favorites_count']
     search_fields = ['name', 'author__username']
     list_filter = ['tags']
+    inlines = (RecipeIngredientInline, )
 
     def favorites_count(self, obj):
-        if Favorite.objects.filter(recipe=obj).exists():
-            return Favorite.objects.filter(recipe=obj).count()
+        if obj.favorites.exists():
+            return obj.favorites.count()
         return 0
 
 
