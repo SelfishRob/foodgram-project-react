@@ -1,13 +1,14 @@
 import base64
 
-from api_foodgram.settings import MAX_VALUE, MIN_VALUE
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
-from recipes.models import (Favorite, Follow, Ingredient, Recipe,
-                            RecipeIngredient, ShoppingCart, Tag)
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
+
+from api_foodgram.settings import MAX_VALUE, MIN_VALUE
+from recipes.models import (Favorite, Follow, Ingredient, Recipe,
+                            RecipeIngredient, ShoppingCart, Tag)
 from users.models import CustomUser
 
 
