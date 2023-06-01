@@ -134,6 +134,14 @@ DJOSER = {
 }
 
 
+MIN_VALUE = 0
+MAX_VALUE = 3200
+X_CORD_TITLE = 250
+Y_CORD_TITLE = 800
+Y_REMOVAL = 20
+FONT_SIZE = 12
+
+
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 

@@ -16,11 +16,14 @@ from api.paginations import Paginate
 from api.permissions import (IsAdminOrReadOnlyPermission,
                              IsAuthorOrReadOnlyPermission)
 from api.serializers import (CustomUserSerializer,
+                             FavoriteSerializer,
                              IngredientSerializer,
-                             RecipeMinifiedSerializer,
                              RecipeSerializer,
+                             ShoppingCartSerializer,
                              SubscriptionSerializer,
                              TagSerializer,)
+from api_foodgram.settings import (X_CORD_TITLE, Y_CORD_TITLE,
+                                   Y_REMOVAL, FONT_SIZE)
 from recipes.models import (Favorite, Follow, Ingredient, Recipe,
                             RecipeIngredient, ShoppingCart, Tag,)
 from users.models import CustomUser
@@ -48,18 +51,15 @@ class CustomUserViewSet(UserViewSet):
         user = request.user
         author = get_object_or_404(CustomUser, id=id)
 
-        if user == author:
-            return Response({
-                'errors': 'Нельзя подписываться на себя'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        if Follow.objects.filter(user=user, author=author).exists():
-            return Response({
-                'errors': 'Вы уже подписаны на данного автора'
-            }, status=status.HTTP_400_BAD_REQUEST)
+        serializer = SubscriptionSerializer(
+            author, data=request.data, context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
 
         follow = Follow.objects.create(user=user, author=author)
         serializer = SubscriptionSerializer(follow,
                                             context={'request': request})
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
@@ -105,20 +105,20 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(methods=('post', 'delete'), detail=True,
             permission_classes=(IsAuthenticated,))
-    def favorite(self, request, id=None):
+    def favorite(self, request, pk=None):
         if request.method == 'POST':
-            return self._add(Favorite, request.user, id)
-        elif request.method == 'DELETE':
-            return self._delete(Favorite, request.user, id)
+            return self._add(FavoriteSerializer, request, pk)
+        if request.method == 'DELETE':
+            return self._delete(Favorite, request.user, pk)
         return None
 
     @action(methods=('post', 'delete'), detail=True,
             permission_classes=(IsAuthenticated,))
-    def shopping_cart(self, request, id=None):
+    def shopping_cart(self, request, pk=None):
         if request.method == 'POST':
-            return self._add(ShoppingCart, request.user, id)
-        elif request.method == 'DELETE':
-            return self._delete(ShoppingCart, request.user, id)
+            return self._add(ShoppingCartSerializer, request, pk)
+        if request.method == 'DELETE':
+            return self._delete(ShoppingCart, request.user, pk)
         return None
 
     @action(methods=('get',), detail=False,
@@ -142,7 +142,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         )
 
         pdf_create = canvas.Canvas(response)
-        pdf_create.setFont("94-font", 12)
+        pdf_create.setFont('94-font', FONT_SIZE)
 
         pdf_file = dict()
         for ingredient in ingredients:
@@ -156,29 +156,33 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 pdf_file[name]['amount'] += ingredient[2]
 
         # Вывод списка покупок
-        pdf_create.drawString(250, 800, 'Список покупок')
+        pdf_create.drawString(X_CORD_TITLE, Y_CORD_TITLE, 'Список покупок')
+        x_cord = 100
         y_cord = 750
         for name, data in pdf_file.items():
             pdf_create.drawString(
-                100, y_cord, f'{name} - {data["amount"]} '
+                x_cord, y_cord, f'{name} - {data["amount"]} '
                 f'{data["measurement_unit"]}'
             )
-            y_cord -= 20
+            y_cord -= Y_REMOVAL
 
         pdf_create.showPage()
         pdf_create.save()
 
         return response
 
-    def _add(self, model, user, id):
-        if model.objects.filter(user=user, recipe__id=id).exists():
-            return Response({
-                'errors': 'Ошибка добавления рецепта'
-            }, status=status.HTTP_400_BAD_REQUEST)
+    def _add(self, serializer, request, id):
+        context = {"request": request}
+        user = request.user.id
         recipe = get_object_or_404(
-            Recipe.objects.add_user_annotations(user.id), id=id)
-        model.objects.create(user=user, recipe=recipe)
-        serializer = RecipeMinifiedSerializer(recipe)
+            Recipe.objects.add_user_annotations(user), id=id)
+        data = {
+            'user': user,
+            'recipe': recipe.id
+        }
+        serializer = serializer(data=data, context=context)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def _delete(self, model, user, id):
