@@ -1,6 +1,6 @@
 name: Django-app workflow
 
-on: [pull_request]
+on: [push]
 
 jobs:
   tests:
@@ -21,15 +21,16 @@ jobs:
     - name: Install dependencies
       run: |
         # обновление pip
+        cd api_foodgram
         python -m pip install --upgrade pip 
         # установка flake8 и его плагинов
         pip install flake8 pep8-naming flake8-broken-line flake8-return flake8-isort
         # установка зависимостей
-        cd api_foodrgam
         pip install -r requirements.txt
     - name: Test with flake8 and django tests
       run: |
         # запуск проверки проекта по flake8
+        cd api_foodgram
         python -m flake8
-      # env:
-      #   SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
