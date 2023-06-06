@@ -1,3 +1,5 @@
+[![Django-app workflow](https://github.com/SelfishRob/foodgram-project-react/actions/workflows/backend.yml/badge.svg?branch=master)](https://github.com/SelfishRob/foodgram-project-react/actions/workflows/backend.yml)
+
 # API foodgram-project-react
 
 ## Описание:
