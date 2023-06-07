@@ -92,9 +92,10 @@ http://localhost/api/recipes/
 [51.250.23.140](http://51.250.23.140)
 
 admin:
+```
 username/password: admin1
 email: admin1@admin.ru
-
+```
 
 
 #### Автор: **[Хафизов Роберт](https://github.com/SelfishRob)**
