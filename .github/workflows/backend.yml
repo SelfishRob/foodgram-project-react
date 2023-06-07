@@ -21,7 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         # обновление pip
-        cd backend/api_foodgram
+        cd backend
         python -m pip install --upgrade pip 
         # установка flake8 и его плагинов
         pip install flake8 pep8-naming flake8-broken-line flake8-return flake8-isort
@@ -30,7 +30,7 @@ jobs:
     - name: Test with flake8 and django tests
       run: |
         # запуск проверки проекта по flake8
-        cd backend/api_foodgram
+        cd backend
         python -m flake8
       env:
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
