@@ -87,7 +87,9 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         script: |
             sudo docker-compose stop
-            sudo docker-compose rm backend
+            sudo docker-compose rm -f backend
+            sudo docker image rm -f selfishrob/foodgram:latest
+            sudo docker pull selfishrob/foodgram:latest
             touch .env
             echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
