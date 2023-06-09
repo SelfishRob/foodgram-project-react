@@ -12,7 +12,6 @@ from rest_framework.permissions import (IsAuthenticated,
 from rest_framework.response import Response
 
 from api.filters import TagFilter
-from api.paginations import Paginate
 from api.permissions import (IsAdminOrReadOnlyPermission,
                              IsAuthorOrReadOnlyPermission)
 from api.serializers import (CustomUserSerializer, FavoriteSerializer,
@@ -36,11 +35,10 @@ class CustomUserViewSet(UserViewSet):
     def subscriptions(self, request):
         user = request.user
         follow = Follow.objects.filter(user=user)
-        paginator = Paginate()
-        page = paginator.paginate_queryset(follow)
+        page = self.paginate_queryset(follow)
         serializer = SubscriptionSerializer(page, many=True,
                                             context={'request': request})
-        return paginator.get_paginated_response(serializer.data)
+        return self.get_paginated_response(serializer.data)
 
     @action(methods=('post',), detail=True,
             permission_classes=(IsAuthenticated,))
