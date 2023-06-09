@@ -14,6 +14,21 @@ API разработан для передачи данных в любое пр
 - Django 3.2
 - DRF
 - Djozer/JWT
+- Docker
+- Docker-compose
+- NGINX
+- CI and CD
+- GIT Actions
+
+## Workflow:
+
+1. tests: Проверка на соответствие проекта PEP8 и проверка тестами с помощью: 
+ flake8
+ pytest
+2. build_and_push_to_docker_hub: Собираем образ и отправляем на DockerHub
+3. Deploy: Происходит копирование и автоматическая отправка проекта на сервер
+4. send_message: При успешном деплое приходит уведомление через телеграм бота
+
 
 ## Установка:
 
@@ -24,61 +39,64 @@ git@github.com:SelfishRob/foodgram-project-react.git
 ```
 
 ```
-cd backend/api_foodgram
+cd infra/
 ```
-
-Cоздать и активировать виртуальное окружение:
-
-```
-python3 -m venv env
-```
+#### Шаблон наполнения infra/.env файла:
 
 ```
-source env/bin/activate
+SECRET_KEY = 'secret_key' # Секретный ключ Django
+DB_ENGINE=django.db.backends.postgresql # указываем, что работаем с postgresql
+DB_NAME=postgres # имя базы данных
+POSTGRES_USER=postgres # логин для подключения к базе данных
+POSTGRES_PASSWORD=postgres # пароль для подключения к БД
+DB_HOST=db # название сервиса (контейнера)
+DB_PORT=5432 # порт для подключения к БД
+```
+
+
+Чтобы развернуть докер-контейнеры вручную, выполнить миграции и загрузить статику, используйте:
+
+```
+docker-compose up -d
 ```
 
 Установить зависимости из файла requirements.txt:
 
 ```
-python3 -m pip install --upgrade pip
+docker-compose exec backend python manage.py migrate
+docker-compose exec backend python manage.py collectstatic --no-input
 ```
 
+Создание суперюзера:
 ```
-pip install -r requirements.txt
+docker-compose exec backend python manage.py createsuperuser
 ```
-
-Выполнить миграции:
-
-```
-python3 manage.py migrate
-```
-
-Запустить проект:
-
-```
-python3 manage.py runserver
-```
-
 
 ## Примеры:
 Регистрация:
 ```
-http://127.0.0.1:8000/api/users/
+http://localhost/api/users/
 ```
 Получение токена:
 ```
-http://127.0.0.1:8000/api/auth/token/login
+http://localhost/api/auth/token/login
 ```
 Ингредиенты, теги и рецепты доступны по адресу:
 ```
-http://127.0.0.1:8000/api/ingredients/
-http://127.0.0.1:8000/api/tags/
-http://127.0.0.1:8000/api/recipes/
+http://localhost/api/ingredients/
+http://localhost/api/tags/
+http://localhost/api/recipes/
 ```
-Полная документация доступна после выполнения команды 
-``` docker-compose up ``` в папке инфра
+
+# Сервер:
+[51.250.23.140](http://51.250.23.140)
+
+admin:
 ```
-Проект запустится на адресе http://localhost, увидеть спецификацию API вы сможете по адресу http://localhost/api/docs/
+username/password: admin1
+email: admin1@admin.ru
 ```
+
+
 #### Автор: **[Хафизов Роберт](https://github.com/SelfishRob)**
 
