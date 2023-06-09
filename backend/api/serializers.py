@@ -93,10 +93,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для рецептов."""
-    tags = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Tag.objects.all()
-    )
+    tags = TagSerializer(read_only=True, many=True)
     author = CustomUserSerializer(read_only=True)
     ingredients = RecipeIngredientSerializer(
         source='recipeingredient_set',
@@ -159,7 +156,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return False
 
     def get_is_in_shopping_cart(self, obj):
-        user = self.context.get('request').user
+        user = self.context['request'].user
         if user.is_authenticated:
             return obj.shopping_cart.filter(user=user).exists()
         return False
@@ -179,7 +176,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
+        tags = self.initial_data.get('tags')
 
         recipe = Recipe.objects.create(**validated_data)
         self.create_ingredients(recipe, ingredients)
@@ -188,8 +185,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients = validated_data.pop('ingredients')
-        tags_data = validated_data.pop('tags')
+        instance.tags.clear()
+        tags = self.initial_data.get('tags')
+        instance.tags.set(tags)
 
         instance.image = validated_data.get('image', instance.image)
         instance.name = validated_data.get('name', instance.name)
@@ -197,10 +195,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         instance.cooking_time = validated_data.get(
             'cooking_time', instance.cooking_time)
 
+        ingredients = validated_data.pop('ingredients')
         RecipeIngredient.objects.filter(recipe=instance).all().delete()
         self.create_ingredients(instance, ingredients)
-        instance.tags.set(tags_data)
-
         instance.save()
         return instance
 
@@ -252,9 +249,12 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         return user.follower.filter(author=author).exists()
 
     def get_recipes(self, obj):
-        recipes = obj.author.recipes
-        return RecipeMinifiedSerializer(
-            recipes, many=True, context=self.context).data
+        request = self.context.get('request')
+        limit = request.GET.get('recipes_limit')
+        queryset = obj.author.recipes.all()
+        if limit:
+            queryset = queryset[:int(limit)]
+        return RecipeMinifiedSerializer(queryset, many=True).data
 
     def get_recipes_count(self, obj):
         return obj.author.recipes.count()
